@@ -1,0 +1,104 @@
+<html>
+    <head>
+        <script type='text/javascript' src="https://unpkg.com/roughjs@4.3.1/bundled/rough.js"></script>
+        <title>VideoMaker</title>
+    </head>
+    <body>
+        <canvas id="canvas"></canvas>
+    </body>
+    <script>
+        window.addEventListener('DOMContentLoaded',event=>{
+            let canvas = document.getElementById("canvas");
+            canvas.width = document.body.clientWidth; //document.width is obsolete
+            canvas.height = document.body.clientHeight; //document.height is obsolete
+            let ctx = canvas.getContext('2d');
+            ctx.font = '20px Arial';
+            let r = rough.canvas(canvas);
+            let color = 'black';
+            
+            let lines = [];
+            let circles = [];
+            let img = []
+            
+            let x = 0;
+            let y = 0;
+            let drawLine = true;
+
+            window.addEventListener('paste', function(e){
+                if (e.clipboardData == false) return false; 
+                var imgs = e.clipboardData.items;
+                if(imgs == undefined) return false;
+                for (var i = 0; i < imgs.length; i++) {
+                    if (imgs[i].type.indexOf("image") == -1) continue;
+                    var imgObj = imgs[i].getAsFile();
+                    var url = window.URL || window.webkitURL;
+                    var src = url.createObjectURL(imgObj);
+                    img.push([loadImage(src), x, y]);
+                }
+            })
+            
+            function loadImage(src){
+                var img = new Image();
+                img.src = src;
+                return img;
+            }
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key == 'c') {
+                    drawLine = !drawLine;
+                }
+                if (event.key == 'r') {
+                    color = 'red';
+                }
+                if (event.key == 'g') {
+                    color = 'green';
+                }
+                if (event.key == 'b') {
+                    color = 'blue';
+                }
+                if (event.key == 'y') {
+                    color = 'yellow';
+                }
+                if (event.key == 'w') {
+                    color = 'white';
+                }
+                if (event.key == 'd') {
+                    color = 'black';
+                }
+            });
+
+            canvas.addEventListener('mousedown', (e) => {
+                x = e.clientX;
+                y = e.clientY;
+            });
+            
+            canvas.addEventListener('mouseup', (e) => {
+                if (drawLine) {
+                    lines.push([x, y, e.clientX, e.clientY, color]);
+                } else {
+                    circles.push([x, y, e.clientX-x, color]);
+                }
+            });
+            
+            function draw(tick){
+                ctx.fillStyle = 'white';
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+                ctx.fillStyle = color;
+                ctx.fillText(drawLine ? 'lines' : 'circles', 15, 30); 
+                img.forEach((e, i)=> {
+                    ctx.drawImage(e[0], e[1], e[2]);
+                });
+                lines.forEach((e, i) => { 
+                    r.curve([[e[0], e[1]], [e[2], e[3]]], { stroke: e[4] });         
+                });
+                circles.forEach((e, i) => { 
+                    r.circle(e[0], e[1], e[2], { fill: e[3] });         
+                });
+            }
+
+            setInterval(function() {
+                requestAnimationFrame(draw);
+            }, 70);
+        });
+    </script>
+</html>
